@@ -141,7 +141,6 @@ Function AddConditionalForwarders {
 
     Try {
         $BuiltInPartitions = @("Forest", "Domain", "Legacy")
-        #$DnsReplicationScope
         foreach ($Zone in $AzurePublicDnsZoneForwarders) {
             if (!(Get-DNSServerZone -ComputerName $DNSServerIPorName | where-object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } )) {
                 If ([String]::IsNullorEmpty($DnsReplicationScope)) {
@@ -161,12 +160,6 @@ Function AddConditionalForwarders {
                     }
                 }
                 ElseIf ($DnsReplicationScope -in $BuiltInPartitions) {
-
-                   # $DnsReplicationScope
-              
-                    # If($DnsReplicationScope -in $BuiltInPartitions){write-host -foreground green 'Not Custom'} Else {write-host -foreground Magenta 'Custom'}
-                    #If($DnsReplicationScope -in $BuiltInPartitions){
-                    #write-host -foreground green "Not a custom DNS partition but a builtin one: $DnsReplicationScope"
                     if ($Null -ne $ForwarderTimeOut) {
                         Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
                             -Name $Zone `
@@ -184,7 +177,6 @@ Function AddConditionalForwarders {
                     }
                 }
                 Else {
-                   # write-host -foreground Cyan "A custom DNS partition: $DnsReplicationScope"
                     if ($Null -ne $ForwarderTimeOut) {
                         Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
                             -Name $Zone `
