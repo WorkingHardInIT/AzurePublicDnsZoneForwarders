@@ -97,13 +97,17 @@ Function RemoveConditionalForwarders {
     Param(
         [Parameter(Mandatory = $False, Position = 2, HelpMessage = "Pass array as System.Collections.ArrayList object")]
         [string[]]
-        $AzurePublicDnsZoneForwarders
+        $AzurePublicDnsZoneForwarders,
+        [Parameter(Mandatory = $False, Position = 9, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
+        [ValidateNotNullorEmpty()]
+        [string]
+        $DNSServer = '.'
     )
     try {
         foreach ($Zone in $AzurePublicDnsZoneForwarders) {
-            if (Get-DNSServerZone -ComputerName $DNSServerIPorName | where-object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone }) {
+            if (Get-DNSServerZone -ComputerName $DNSServer | where-object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone }) {
                 Remove-DnsServerZone  `
-                    -Name $Zone -Force 
+                    -Name $Zone -Force
                 Write-output "Removed conditional forward lookup zone for $Zone"
             }
         }
@@ -136,7 +140,11 @@ Function AddConditionalForwarders {
         [Parameter(Mandatory = $False, Position = 4, HelpMessage = "Name of DNS Partition")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DirectoryPartitionName = $Null
+        $DirectoryPartitionName = $Null,
+        [Parameter(Mandatory = $False, Position = 5, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
+        [ValidateNotNullorEmpty()]
+        [string]
+        $DnsServer = '.'
     )
 
     Try {
@@ -145,14 +153,14 @@ Function AddConditionalForwarders {
             if (!(Get-DNSServerZone -ComputerName $DNSServerIPorName | where-object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } )) {
                 If ([String]::IsNullorEmpty($DnsReplicationScope)) {
                     if ($Null -ne $ForwarderTimeOut) {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2 `
                             -ForwarderTimeout $ForwarderTimeOut
                         Write-output "Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds"
                     }
                     else {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2
                         Write-output "Added conditional forward lookup zone for $Zone"
@@ -161,7 +169,7 @@ Function AddConditionalForwarders {
                 }
                 ElseIf ($DnsReplicationScope -in $BuiltInPartitions) {
                     if ($Null -ne $ForwarderTimeOut) {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2 `
                             -ForwarderTimeout $ForwarderTimeOut `
@@ -169,7 +177,7 @@ Function AddConditionalForwarders {
                         Write-output "Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds. It is AD integrated and replicates to the builtin partition $DnsReplicationScope."
                     }
                     else {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2 `
                             -ReplicationScope $DnsReplicationScope
@@ -178,7 +186,7 @@ Function AddConditionalForwarders {
                 }
                 Else {
                     if ($Null -ne $ForwarderTimeOut) {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2 `
                             -ForwarderTimeout $ForwarderTimeOut `
@@ -187,7 +195,7 @@ Function AddConditionalForwarders {
                         Write-output "Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds. It is AD integrated and replicates to custom partition $DirectoryPartitionName."
                     }
                     else {
-                        Add-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                        Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                             -Name $Zone `
                             -MasterServers $DnsServer2Forward2 `
                             -ReplicationScope $DnsReplicationScope `
@@ -220,7 +228,11 @@ Function UpdateConditionalForwarders {
         $UpdateDnsServer2Forward2,
         [Parameter(Mandatory = $False, Position = 2, HelpMessage = "Specify the forwader time out in seconds.")]
         [Int]
-        $ForwarderTimeOut = $Null
+        $ForwarderTimeOut = $Null,
+        [Parameter(Mandatory = $False, Position = 3, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
+        [ValidateNotNullorEmpty()]
+        [string]
+        $DnsServer = '.'
     )
     Try {
 
@@ -238,7 +250,7 @@ Function UpdateConditionalForwarders {
                         }
                         else {
                             Write-output  "$Zone Array value is different in both DNS server IP address arrays: $_"
-                            Set-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                            Set-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                                 -Name $Zone `
                                 -MasterServers $UpdateDnsServer2Forward2
                             Write-output "    ||==> Updated DNS server for conditional forward lookup zone for $Zone to $UpdateDnsServer2Forward2"
@@ -252,7 +264,7 @@ Function UpdateConditionalForwarders {
 
         if ($Null -ne $ForwarderTimeOut) {
             if ((Get-DNSServerZone -ComputerName $DNSServerIPorName | where-object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } )) {
-                Set-DnsServerConditionalForwarderZone -ComputerName $DNSServerIPorName `
+                Set-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
                     -Name $Zone `
                     -ForwarderTimeout $ForwarderTimeOut
             }
@@ -268,15 +280,14 @@ Function UpdateConditionalForwarders {
 
 }
 
-
 Function RunAzureConditionalForwarderMaintenance {
 
     Param(
-        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "This path and CSV file with the Azure Zone host names")]
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
         [ValidateNotNullorEmpty()]
         [string]
         $DNSServerIPorName,
-        [Parameter(Mandatory = $true, Position = 1, HelpMessage = "This path and CSV file with the Azure Zone host names")]
+        [Parameter(Mandatory = $true, Position = 1, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
         [ValidateNotNullorEmpty()]
         [string]
         $CsvFilePath,
@@ -296,7 +307,7 @@ Function RunAzureConditionalForwarderMaintenance {
         [ValidateNotNullorEmpty()]
         [string[]]
         $InstanceDotDB = $Null,
-        [Parameter(Mandatory = $True, Position = 6, HelpMessage = "Valid actions are: Add, Remove, Update")]
+        [Parameter(Mandatory = $True, Position = 6, HelpMessage = "Valid actions are: Add, Remove, Update.")]
         [ValidateSet('Add', 'Remove', 'Update')]
         [string]
         $Action,
@@ -304,15 +315,19 @@ Function RunAzureConditionalForwarderMaintenance {
         [ValidateNotNullorEmpty()]
         [Int]
         $ForwarderTimeOut = $Null,
-        [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Scope of the DNS Partition")]
+        [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Scope of the DNS Partition.")]
         [ValidateNotNullorEmpty()]
         [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
         [string]
         $DnsReplicationScope = $Null,
-        [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Name of DNS Partition")]
+        [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Name of DNS Partition.")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DNSPartition = $Null
+        $DNSPartition = $Null,
+        [Parameter(Mandatory = $False, Position = 9, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
+        [ValidateNotNullorEmpty()]
+        [string]
+        $DNSServer = '.'
     )
 
     #Load  Azure public DNS zones from CSV file (table as shown in https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns)
@@ -344,27 +359,30 @@ Function RunAzureConditionalForwarderMaintenance {
     #if ([String]::IsNullorEmpty($DnsReplicationScope)) { WRIte-Host -ForegroundColor MAGENTA  "BS: $DnsReplicationScope" }
 
     #if ([String]::IsNullorEmpty($DnsReplicationScope)) { WRIte-Host -ForegroundColor RED  "BS: $DnsReplicationScope" }
+
+    
+
     Switch ($Action) {
         'Add' {
         
             If ( [String]::IsNullorEmpty($DnsReplicationScope)) {
                 #wRITE-HOST -ForegroundColor yELLOW "Part: $DNsPartition "
-                AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2
+                AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServer
             }
             Else {
                 if ([String]::IsNullorEmpty($DNsPartition)) {
                    # wRITE-HOST -ForegroundColor gREEN "Part: $DNsPartition  "
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServer
                 }
                 Else {
                    # wRITE-HOST -ForegroundColor Yellow "Part: $DNsPartition  "
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServer
                 }
             }
         }
  
-        'Remove' { RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders }
-        'Update' { UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 -ForwarderTimeOut $ForwarderTimeOut }
+        'Remove' { RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer $DNSServer }
+        'Update' { UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServer }
     }
 }
 
@@ -389,7 +407,7 @@ $DNSServer = '192.168.2.30'
 #$DnsReplicationScope = 'Forest'
 
 $action = 'Remove'
-RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB #-DnsReplicationScope $DnsReplicationScope -DNSPartition 'OP-BLUE-ADDS-SITE'
+RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB -DNSServer $DNSServer
 $action = 'Add'
 RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB #-DnsReplicationScope $DnsReplicationScope -DNSPartition $DNSPartition
 $action = 'Update'
