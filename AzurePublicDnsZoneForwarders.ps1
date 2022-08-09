@@ -131,7 +131,7 @@ Function AddConditionalForwarders {
         $DnsServer2Forward2,
         [Parameter(Mandatory = $False, Position = 2, HelpMessage = "Specify the forwader time out in seconds.")]
         [Int]
-        $ForwarderTimeOut = 5,
+        $ForwarderTimeOut = $Null,
         [Parameter(Mandatory = $False, Position = 3, HelpMessage = "Scope of the DNS Partition")]
         [ValidateNotNullorEmpty()]
         [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
@@ -314,7 +314,7 @@ Function RunAzureConditionalForwarderMaintenance {
         [Parameter(Mandatory = $False, Position = 7, HelpMessage = "Specify the forwader time out in seconds.")]
         [ValidateNotNullorEmpty()]
         [Int]
-        $ForwarderTimeOut = $Null,
+        $ForwarderTimeOut = 5,
         [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Scope of the DNS Partition.")]
         [ValidateNotNullorEmpty()]
         [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
@@ -366,23 +366,28 @@ Function RunAzureConditionalForwarderMaintenance {
         'Add' {
         
             If ( [String]::IsNullorEmpty($DnsReplicationScope)) {
-                #wRITE-HOST -ForegroundColor yELLOW "Part: $DNsPartition "
-                AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServer
+                AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders `
+                    -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
             }
             Else {
                 if ([String]::IsNullorEmpty($DNsPartition)) {
-                   # wRITE-HOST -ForegroundColor gREEN "Part: $DNsPartition  "
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServer
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 `
+                        $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
                 }
                 Else {
-                   # wRITE-HOST -ForegroundColor Yellow "Part: $DNsPartition  "
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServer
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 `
+                        -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
                 }
             }
         }
  
-        'Remove' { RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer $DNSServer }
-        'Update' { UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServer }
+        'Remove' {
+            RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer $DNSServer
+        }
+        'Update' {
+            UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 `
+                -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServer
+        }
     }
 }
 
@@ -390,7 +395,7 @@ Function RunAzureConditionalForwarderMaintenance {
 
 #Load  Azure public DNS zones from CSV file
 $CsvFilePath = "C:\SysAdmin\Scripting\AzurePublicDnsZoneForwarders\AzurePublicDnsZoneForwarders.csv" #Loading CSV file
-[System.Collections.ArrayList]$data = Import-Csv $CsvFilePath -delimiter ';'
+#[System.Collections.ArrayList]$data = Import-Csv $CsvFilePath -delimiter ';'
 
 
 $DnsServer2Forward2 = @('172.16.100.101', '172.16.100.102') #Custom DNS server(s) or your Firewall DNS proxy in Azure
