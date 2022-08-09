@@ -1,0 +1,31 @@
+Private link resource type / Subresource;Private DNS zone name;Public DNS zone forwarders
+Azure Automation / (Microsoft.Automation/automationAccounts) / Webhook, DSCAndHybridWorker;privatelink.azure-automation.net;azure-automation.net
+Azure SQL Database (Microsoft.Sql/servers) / sqlServer;privatelink.database.windows.net;database.windows.net
+Azure SQL Managed Instance (Microsoft.Sql/managedInstances);privatelink.{dnsPrefix}.database.windows.net;{instanceName}.{dnsPrefix}.database.windows.net
+Azure Synapse Analytics (Microsoft.Synapse/workspaces) / Sql;privatelink.sql.azuresynapse.net;sql.azuresynapse.net
+Azure Synapse Studio (Microsoft.Synapse/privateLinkHubs) / Web;privatelink.azuresynapse.net;azuresynapse.net
+Storage account (Microsoft.Storage/storageAccounts) / Blob (blob, blob_secondary);privatelink.blob.core.windows.net;blob.core.windows.net
+Storage account (Microsoft.Storage/storageAccounts) / Table (table, table_secondary);privatelink.table.core.windows.net;table.core.windows.net
+Storage account (Microsoft.Storage/storageAccounts) / Queue (queue, queue_secondary);privatelink.queue.core.windows.net;queue.core.windows.net
+Storage account (Microsoft.Storage/storageAccounts) / File (file, file_secondary);privatelink.file.core.windows.net;file.core.windows.net
+Storage account (Microsoft.Storage/storageAccounts) / Web (web, web_secondary);privatelink.web.core.windows.net;web.core.windows.net
+Azure Data Lake File System Gen2 (Microsoft.Storage/storageAccounts) / Data Lake File System Gen2 (dfs, dfs_secondary);privatelink.dfs.core.windows.net;dfs.core.windows.net
+Azure Backup (Microsoft.RecoveryServices/vaults) / AzureBackup;privatelink.{region}.backup.windowsazure.com;{region}.backup.windowsazure.com
+Azure Site Recovery (Microsoft.RecoveryServices/vaults) / AzureSiteRecovery;privatelink.{region}.siterecovery.windowsazure.com;{region}.siterecovery.windowsazure.com
+Azure Event Hubs (Microsoft.EventHub/namespaces) / namespace;privatelink.servicebus.windows.net;servicebus.windows.net
+Azure Service Bus (Microsoft.ServiceBus/namespaces) / namespace;privatelink.servicebus.windows.net;servicebus.windows.net
+Azure IoT Hub (Microsoft.Devices/IotHubs) / iotHub;privatelink.azure-devices.net;azure-devices.net
+;privatelink.servicebus.windows.net1;servicebus.windows.net
+Azure Event Grid (Microsoft.EventGrid/topics) / topic;privatelink.eventgrid.azure.net;eventgrid.azure.net
+;privatelink.notebooks.azure.net;notebooks.azure.net
+;;instances.azureml.ms
+;;aznbcontent.net
+SignalR (Microsoft.SignalRService/SignalR) / signalR;privatelink.service.signalr.net;service.signalr.net
+Azure Monitor (Microsoft.Insights/privateLinkScopes) / azuremonitor;privatelink.monitor.azure.com;monitor.azure.com
+;privatelink.oms.opinsights.azure.com;oms.opinsights.azure.com
+;privatelink.agentsvc.azure-automation.net;agentsvc.azure-automation.net
+;privatelink.guestconfiguration.azure.com;guestconfiguration.azure.com
+Azure Data Explorer (Microsoft.Kusto);privatelink.{region}.kusto.windows.net;{region}.kusto.windows.net
+Azure Static Web Apps (Microsoft.Web/staticSites) / staticSites;privatelink.azurestaticapps.net;azurestaticapps.net
+;privatelink.{partitionId}.azurestaticapps.net;{partitionId}.azurestaticapps.net
+

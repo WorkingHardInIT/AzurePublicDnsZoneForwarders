@@ -1,8 +1,10 @@
 . .\AzurePublicDnsZoneForwarders.ps1
 
 #Load  Azure public DNS zones from CSV file
-$CsvFilePath = "C:\SysAdmin\Scripting\AzurePublicDnsZoneForwarders\AzurePublicDnsZoneForwarders.csv" #Loading CSV file
 
+
+#$CsvFilePath = "C:\SysAdmin\Scripting\AzurePublicDnsZoneForwarders\AzurePublicDnsZoneForwarders.csv" #Loading CSV file
+$CsvFilePath = ".\AzurePublicDnsZoneForwarders.csv" #Loading CSV file
 
 $DnsServer2Forward2 = @('172.16.100.101', '172.16.100.102') #Custom DNS server(s) or your Firewall DNS proxy in Azure
 $UpdateDnsServer2Forward2 = @('192.168.100.101', '192.168.100.102')
