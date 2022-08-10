@@ -1,4 +1,5 @@
-See my blog for more background info on this PowerShell script.
+See my blog post https://blog.workinghardinit.work/2022/08/09/powershell-script-to-maintain-azure-public-dns-zone-conditional-forwarders/
+for more background info on this PowerShell script.
 Please note that in the update part I have not (yet) implemented updating
 whether the zone is stored in Active Directory or not, and if so in what way.
 This is mainly due to the fact that doing so can lead to name resolution failure
