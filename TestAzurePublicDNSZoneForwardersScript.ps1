@@ -1,3 +1,4 @@
+Clear-Host
 . .\AzurePublicDnsZoneForwarders.ps1
 
 #Load  Azure public DNS zones from CSV file
@@ -38,5 +39,10 @@ $action = 'Remove'
 RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB #-DnsReplicationScope $DnsReplicationScope -DNSPartition 'OP-BLUE-ADDS-SITE'
 $action = 'Add'
 RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions `
- -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB -DnsReplicationScope $DnsReplicationScope  -DNSPartition $DNSPartition -ForwarderTimeOut $ForwarderTimeOut -DNSServer $DNSServer
+    -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB -DnsReplicationScope $DnsReplicationScope  -DNSPartition $DNSPartition -ForwarderTimeOut $ForwarderTimeOut -DNSServer $DNSServer
+
+
+
+IF ($True) {} 
+
 
