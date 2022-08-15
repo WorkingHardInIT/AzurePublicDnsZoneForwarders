@@ -42,7 +42,3 @@ RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $a
     -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB -DnsReplicationScope $DnsReplicationScope  -DNSPartition $DNSPartition -ForwarderTimeOut $ForwarderTimeOut -DNSServer $DNSServer
 
 
-
-IF ($True) {} 
-
-

@@ -21,7 +21,7 @@ function CreateRegionZones {
 
     [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwardersWithRegions = $AzurePublicDnsZoneForwarders.Clone()
     ForEach ($Zone in $AzurePublicDnsZoneForwarders) {
-        #Check If the zone has {region} in it, If so swap out for the place holder for the regions specIfied
+        #Check if the zone has {region} in it, If so swap out for the place holder for the regions specIfied
         If ('{region}' -eq $Zone.Substring(0, $Zone.IndexOf("."))) {
             [void]$AllAzurePublicDnsZoneForwardersWithRegions.Remove($Zone)
             If ($Null -ne $HARegions) {
@@ -47,7 +47,7 @@ function CreatePartitionZones {
 
     [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwardersWithRegionsAndPartitions = $AzurePublicDnsZoneForwarders.Clone()
     ForEach ($Zone in $AzurePublicDnsZoneForwarders) {
-        #Check If the zone has {region} in it, If so swap out for the place holder for the regions specIfied
+        #Check if the zone has {region} in it, If so swap out for the place holder for the regions specIfied
         If ('{partitionId}' -eq $Zone.Substring(0, $Zone.IndexOf("."))) {
             [void]$AllAzurePublicDnsZoneForwardersWithRegionsAndPartitions.Remove($Zone)
             If ($Null -ne $PartitionIDs) {
@@ -158,10 +158,6 @@ Function AddConditionalForwarders {
                             'ForwarderTimeout' = $ForwarderTimeOut
                         }
                         Add-DnsServerConditionalForwarderZone @Params
-                        <#                       -ComputerName $DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 `
-                            -ForwarderTimeout $ForwarderTimeOut #>
                         Write-Output "1 Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds"
                     }
                     Else {
@@ -171,9 +167,6 @@ Function AddConditionalForwarders {
                             'MasterServers' = $DnsServer2Forward2
                         }
                         Add-DnsServerConditionalForwarderZone @Params 
-                        <# -ComputerName $DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 #>
                         Write-Output "2 Added conditional forward lookup zone for $Zone"
                         return
                     }
@@ -188,11 +181,6 @@ Function AddConditionalForwarders {
                             'ReplicationScope' = $DnsReplicationScope
                         }
                         Add-DnsServerConditionalForwarderZone @Params
-                        <# -ComputerName $DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 `
-                            -ForwarderTimeout $ForwarderTimeOut `
-                            -ReplicationScope $DnsReplicationScope #>
                         Write-Output "3 Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds. It is AD integrated and replicates to the builtin partition $DnsReplicationScope."
                     }
                     Else {
@@ -203,10 +191,6 @@ Function AddConditionalForwarders {
                             'ReplicationScope' = $DnsReplicationScope
                         }
                         Add-DnsServerConditionalForwarderZone @Params
-                        <#                         Add-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 `
-                            -ReplicationScope $DnsReplicationScope #>
                         Write-Output "4 Added conditional forward lookup zone for $Zone"
                     }
                 }
@@ -221,12 +205,6 @@ Function AddConditionalForwarders {
                             'DirectoryPartitionName' = $DirectoryPartitionName
                         }
                         Add-DnsServerConditionalForwarderZone @Params
-                        <# -ComputerName $DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 `
-                            -ForwarderTimeout $ForwarderTimeOut `
-                            -ReplicationScope $DnsReplicationScope `
-                            -DirectoryPartitionName $DirectoryPartitionName #>
                         Write-Output "5 Added conditional forward lookup zone for $Zone with Timeout value $ForwarderTimeOut seconds. It is AD integrated and replicates to custom partition $DirectoryPartitionName."
                     }
                     Else {
@@ -238,12 +216,6 @@ Function AddConditionalForwarders {
                             'DirectoryPartitionName' = $DirectoryPartitionName
                         }
                         Add-DnsServerConditionalForwarderZone @Params
-                       
-                        <#                      -ComputerName $Params$DnsServer `
-                            -Name $Zone `
-                            -MasterServers $DnsServer2Forward2 `
-                            -ReplicationScope $DnsReplicationScope `
-                            -DirectoryPartitionName $DirectoryPartitionName #>
                         Write-Output "6 Added conditional forward lookup zone for $Zone"
                     }               
                 }                          

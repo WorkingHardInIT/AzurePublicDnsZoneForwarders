@@ -13,11 +13,11 @@ There is no warranty. Use is at your own risk. You are responsible for testing a
 making sure it is fit for purpose in your use cases and the environments where you use it.
 
 Details of improve commit on 2022/08/15:
-    Changed the parameter list for the DNS commands from using the ` continuation character to splatting
-    $CurrentIpAddressesOfForwarder to better indicate its purpose
-    Fixed some code style inconsistencies: if => If everywhere, else => Else everywhere
-    Ik check for duplicate entries in the code so I remove the specific Catch error line for that (If ($Error[0].categoryInfo.category -eq 'ResourceExists') { Write-Output "Duplicate Azure DNS forwarder FQDN: $($Error[0].categoryInfo.targetname), no need to add it again." } ...)
-    Done! $Q variable loads the current DNS Servers to check is they are equal or different to updated ones, $Q parameter is now called $CurrentIpAddressesOfForwarder
-    Fixed GreateCustomApplicationPartitionForDNS.ps1 Typo, is now CreateCustomApplicationPartitionForDNS.ps1
-    Removed orphan $counter variable
-    Renamed $data variable to $csvContents for clarity
+    Changed the parameter list for the DNS commands from using the ` continuation character to splatting.
+    $CurrentIpAddressesOfForwarder to better indicate its purpose.
+    Fixed some code style inconsistencies: if => If everywhere, else => Else everywhere.
+    Ik check for duplicate entries in the code so I remove the specific Catch error line for that (If ($Error[0].categoryInfo.category -eq 'ResourceExists') { Write-Output "Duplicate Azure DNS forwarder FQDN: $($Error[0].categoryInfo.targetname), no need to add it again." } ...).
+    Done! $Q variable loads the current DNS Servers to check is they are equal or different to updated ones, $Q parameter is now called $CurrentIpAddressesOfForwarder.
+    Fixed GreateCustomApplicationPartitionForDNS.ps1 Typo, is now CreateCustomApplicationPartitionForDNS.ps1.
+    Removed orphan $counter variable.
+    Renamed $data variable to $csvContents for clarity.
