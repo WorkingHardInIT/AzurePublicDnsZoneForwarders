@@ -12,7 +12,7 @@ IMPORTANT: This code is work in progress to be used and adapted for scenarios I 
 There is no warranty. Use is at your own risk. You are responsible for testing and
 making sure it is fit for purpose in your use cases and the environments where you use it.
 
-Details of improve commit on 2022/08/15:
+Details of improvements committed on 2022/08/15:
     Changed the parameter list for the DNS commands from using the ` continuation character to splatting.
     $CurrentIpAddressesOfForwarder to better indicate its purpose.
     Fixed some code style inconsistencies: if => If everywhere, else => Else everywhere.
