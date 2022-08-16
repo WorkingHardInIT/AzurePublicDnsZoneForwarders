@@ -391,11 +391,7 @@ Function RunAzureConditionalForwarderMaintenance {
         [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Name of DNS Partition.")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DNSPartition = $Null<# ,
-        [Parameter(Mandatory = $False, Position = 9, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
-        [ValidateNotNullorEmpty()]
-        [string]
-        $DNSServer = '.' #>
+        $DNSPartition = $Null
     )
 
     $Params = @{

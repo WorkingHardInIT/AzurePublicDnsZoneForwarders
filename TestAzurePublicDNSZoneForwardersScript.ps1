@@ -1,7 +1,7 @@
 Clear-Host
 . .\AzurePublicDnsZoneForwarders.ps1
 
-#Load  Azure public DNS zones from CSV file
+#Load  Azure public DNS zones from CSV file that has header and is ';' seperated
 
 
 #$CsvFilePath = "C:\SysAdmin\Scripting\AzurePublicDnsZoneForwarders\AzurePublicDnsZoneForwarders.csv" #Loading CSV file
