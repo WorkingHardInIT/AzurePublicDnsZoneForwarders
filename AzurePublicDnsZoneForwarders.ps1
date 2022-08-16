@@ -353,10 +353,10 @@ function LoadAndFilterData {
 
 Function RunAzureConditionalForwarderMaintenance {
     Param(
-        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DNSServerIPorName,
+        $DNSServerIpOrName,
         [Parameter(Mandatory = $true, Position = 1, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
         [ValidateNotNullorEmpty()]
         [string]
@@ -404,34 +404,112 @@ Function RunAzureConditionalForwarderMaintenance {
         'InstanceDotDB'         = $InstanceDotDB
     }
     
-    $AzurePublicDnsZoneForwarders = LoadAndFilterData @Params
+    #This is the sanitized list of Azure DNS public forwarders to maintain => add, remove update."
+    #We need it as a paramter to pass on to the MaintainConditionalForwarders function.
+    [System.Collections.ArrayList]$AzurePublicDnsZoneForwarders = LoadAndFilterData @Params
+
+    #If there is no replication scope in play the condotional forwarding zones are not stored in Active Directory - we do not pass this parameter
+    if ([String]::IsNullorEmpty($DnsReplicationScope)){
+        $Params = @{
+        'AzurePublicDnsZoneForwarders'  = $AzurePublicDnsZoneForwarders
+        'DNSServerIpOrName'             = $DNSServerIpOrName
+        'DnsServer2Forward2'            = $DnsServer2Forward2
+        'Action'                        = $Action
+        'ForwarderTimeOut'              = $ForwarderTimeOut
+        }
+    }
+    Else {
+        #So if the DSNReplicationScope is a valid value we need to know if there is a partition in play, if there is not, we must not pass it as a parameter.
+        If ([String]::IsNullorEmpty($DNsPartition)){
+            $Params = @{
+            'AzurePublicDnsZoneForwarders'  = $AzurePublicDnsZoneForwarders
+            'DNSServerIpOrName'             = $DNSServerIpOrName
+            'DnsServer2Forward2'            = $DnsServer2Forward2
+            'Action'                        = $Action
+            'ForwarderTimeOut'              = $ForwarderTimeOut
+            'DnsReplicationScope'           = $DnsReplicationScope
+            }
+        }
+        # ... if there is, we need to pass that as a parameter as well.
+        else{
+            $Params = @{
+                'AzurePublicDnsZoneForwarders'  = $AzurePublicDnsZoneForwarders
+                'DNSServerIpOrName'             = $DNSServerIpOrName
+                'DnsServer2Forward2'            = $DnsServer2Forward2
+                'Action'                        = $Action
+                'ForwarderTimeOut'              = $ForwarderTimeOut
+                'DnsReplicationScope'           = $DnsReplicationScope
+                'DNsPartition'                  = $DNsPartition
+        }
+    }
+}
     
+    MaintainConditionalForwarders @Params
+
+
+    
+}
+
+function MaintainConditionalForwarders {
+    Param(
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "The list of Azure DNS public forwarders to maintain => add, remove update.")]
+        [ValidateNotNullorEmpty()]
+        [System.Collections.ArrayList]
+        $AzurePublicDnsZoneForwarders,
+        [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
+        [ValidateNotNullorEmpty()]
+        [string]
+        $DNSServerIpOrName,
+        [Parameter(Mandatory = $true, Position = 2, HelpMessage = "Enter the IP address(es) of the DNS server{s) to forward to as an array of strings.")]
+        [ValidateNotNullorEmpty()]
+        [String[]]
+        $DnsServer2Forward2,
+        [Parameter(Mandatory = $false, Position = 3, HelpMessage = "Valid actions are: Add, Remove, Update.")]
+        [ValidateSet('Add', 'Remove', 'Update')]
+        [string]
+        $Action,
+        [Parameter(Mandatory = $False, Position = 4, HelpMessage = "Specify the forwader time out in seconds.")]
+        [ValidateNotNullorEmpty()]
+        [Int]
+        $ForwarderTimeOut = 5,
+        [Parameter(Mandatory = $False, Position = 5, HelpMessage = "Scope of the DNS Partition.")]
+        [ValidateNotNullorEmpty()]
+        [ValidateSet('Custom', 'Domain', 'Forest', 'Legacy')]
+        [string]
+        $DnsReplicationScope = $Null,
+        [Parameter(Mandatory = $False, Position = 6, HelpMessage = "Name of DNS Partition.")]
+         #[ValidateNotNullorEmpty()]
+        [string]
+        $DNSPartition = $Null
+    )
+
     Switch ($Action) {
         'Add' {
         
             If ( [String]::IsNullorEmpty($DnsReplicationScope)) {
                 AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders `
-                    -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
+                    -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServerIpOrName -ForwarderTimeOut $ForwarderTimeOut
             }
             Else {
                 If ([String]::IsNullorEmpty($DNsPartition)) {
                     AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer2Forward2 `
-                        $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
+                        $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServerIpOrName -ForwarderTimeOut $ForwarderTimeOut
                 }
                 Else {
                     AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 `
-                        -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
+                        -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServerIpOrName -ForwarderTimeOut $ForwarderTimeOut
                 }
             }
         }
  
         'Remove' {
-            RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer $DNSServer
+            RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer $DNSServerIpOrName
         }
         'Update' {
             UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 `
-                -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServer
+                -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServerIpOrName
         }
     }
-}
 
+
+}
