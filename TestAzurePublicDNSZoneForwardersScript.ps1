@@ -36,7 +36,7 @@ RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $a
 $DNSPartition = 'OP-BLUE-ADDS-SITE'
 $DnsReplicationScope = 'Custom'
 $action = 'Remove'
-RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB #-DnsReplicationScope $DnsReplicationScope -DNSPartition 'OP-BLUE-ADDS-SITE'
+RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB
 $action = 'Add'
 RunAzureConditionalForwarderMaintenance -DNSServerIPorName $DNSServer -Action $action -CsvFilePath $CsvFilePath -DnsServer2Forward2 $DnsServer2Forward2 -HARegions $HARegions `
     -PartitionIDs $PartitionIDs -InstanceDotDB $InstanceDotDB -DnsReplicationScope $DnsReplicationScope  -DNSPartition $DNSPartition -ForwarderTimeOut $ForwarderTimeOut 

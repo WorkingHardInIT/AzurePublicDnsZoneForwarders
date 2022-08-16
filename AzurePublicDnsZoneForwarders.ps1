@@ -478,7 +478,7 @@ function MaintainConditionalForwarders {
         [string]
         $DnsReplicationScope = $Null,
         [Parameter(Mandatory = $False, Position = 6, HelpMessage = "Name of DNS Partition.")]
-         #[ValidateNotNullorEmpty()]
+        [ValidateNotNullorEmpty()]
         [string]
         $DNSPartition = $Null
     )
