@@ -111,7 +111,7 @@ Function RemoveConditionalForwarders {
         }
     }
     Catch {
-        Write-Output "WOEPS:" $Error[0]
+        Write-Output "An error has occured:" $Error[0]
     }
     Finally {
 
@@ -261,10 +261,13 @@ Function UpdateConditionalForwarders {
                             Write-Output "$Zone Array value is the same in both DNS server IP address arrays: $_"
                         }
                         Else {
-                            Write-Output  "$Zone Array value is dIfferent in both DNS server IP address arrays: $_"
-                            Set-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
-                                -Name $Zone `
-                                -MasterServers $UpdateDnsServer2Forward2
+                            Write-Output  "$Zone Array value is different in both DNS server IP address arrays: $_"
+                            $Params = @{
+                                'ComputerName'  = $DnsServer
+                                'Name'          = $Zone
+                                'MasterServers' = $DnsServer2Forward2
+                            }
+                            Set-DnsServerConditionalForwarderZone @Params
                             Write-Output "    ||==> Updated DNS server for conditional forward lookup zone for $Zone to $UpdateDnsServer2Forward2"
                             continue
                         }
@@ -275,9 +278,12 @@ Function UpdateConditionalForwarders {
 
         If ($Null -ne $ForwarderTimeOut) {
             If ((Get-DnsServerZone -ComputerName $DNSServerIPorName | Where-Object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } )) {
-                Set-DnsServerConditionalForwarderZone -ComputerName $DnsServer `
-                    -Name $Zone `
-                    -ForwarderTimeout $ForwarderTimeOut
+                $Params = @{
+                    'ComputerName'     = $DnsServer
+                    'Name'             = $Zone
+                    'ForwarderTimeout' = $ForwarderTimeOut
+                }
+                Set-DnsServerConditionalForwarderZone @Params
             }
         }
     }
@@ -289,9 +295,61 @@ Function UpdateConditionalForwarders {
     }
 
 }
+function LoadAndFilterData {
+    Param(
+    [Parameter(Mandatory = $true, Position = 0, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
+    [ValidateNotNullorEmpty()]
+    [string]
+    $CsvFilePath,
+    [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Enter the IP address(es) of the DNS server{s) to forward to as an array of strings.")]
+    [ValidateNotNullorEmpty()]
+    [String[]]
+    $DnsServer2Forward2,
+    [Parameter(Mandatory = $False, Position = 2, HelpMessage = "Enter the Azure regions for which you want to create respecive conditional forwarders.")]
+    [ValidateNotNullorEmpty()]
+    [string[]]
+    $HARegions = $Null,
+    [Parameter(Mandatory = $false, Position = 3, HelpMessage = "Enter the partition IDs of any static web apps, If applicable, for which you want to create respecive conditional forwarders.")]
+    [ValidateNotNullorEmpty()]
+    [string[]]
+    $PartitionIDs = $Null,
+    [Parameter(Mandatory = $false, Position = 4, HelpMessage = "Enter the Azure SQL instance and DB, If applicable, for which you want to create respecive conditional forwarders.")]
+    [ValidateNotNullorEmpty()]
+    [string[]]
+    $InstanceDotDB = $Null
+    )
+
+   #Load  Azure public DNS zones from CSV file (table as shown in https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns)
+    [System.Collections.ArrayList]$csvContents = Import-Csv $CsvFilePath -Delimiter ';'
+
+    #Grab only the public DNS Zone forwarders to add as conditional forwarding zone on the on-premises DNS servers (non-AD integrated)
+    [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwarders = $csvContents.('Public DNS zone forwarders') #Note this automagically drops the header as well. No need for | select -skip 1 to remove header
+
+
+    #remove duplicates - some Azure services have the same
+    [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwarders = $AllAzurePublicDnsZoneForwarders | Sort-Object | Get-Unique
+
+    #The MSFT table at can have empty rows, get rid of them.
+    [System.Collections.ArrayList]$NoEmptiesAllAzurePublicDnsZoneForwarders = RemoveEmptyZones -AzurePublicDnsZoneForwarders $AllAzurePublicDnsZoneForwarders
+    #$NoEmptiesAllAzurePublicDnsZoneForwarders
+
+    #If you choose to create Region based entries for the desired regions is is done here, If not, the {region} place holder based rows are removed and not added.
+    [System.Collections.ArrayList]$NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders = CreateRegionZones -AzurePublicDnsZoneForwarders $NoEmptiesAllAzurePublicDnsZoneForwarders -HARegions $HARegions
+    #$NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders
+
+    #If you choose to create partition Id based entries for the desired partitions is done here, If not, the {partitionId} place holder based rows are removed and not added.
+    [System.Collections.ArrayList]$NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders = CreatePartitionZones -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders -PartitionIDs $PartitionIDs
+    #$NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders
+
+    #If you choose to create SQL instance based entries for the desired SQL instances is done here, If not, the {instance.{db} place holder based rows are removed and not added.
+    [System.Collections.ArrayList]$NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders = CreateSqlInstances -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders -InstanceDotDB $InstanceDotDB
+    #$NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders
+
+    return $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders
+   
+}
 
 Function RunAzureConditionalForwarderMaintenance {
-
     Param(
         [Parameter(Mandatory = $true, Position = 0, HelpMessage = "This path and CSV file with the Azure Zone host names.")]
         [ValidateNotNullorEmpty()]
@@ -317,7 +375,7 @@ Function RunAzureConditionalForwarderMaintenance {
         [ValidateNotNullorEmpty()]
         [string[]]
         $InstanceDotDB = $Null,
-        [Parameter(Mandatory = $True, Position = 6, HelpMessage = "Valid actions are: Add, Remove, Update.")]
+        [Parameter(Mandatory = $false, Position = 6, HelpMessage = "Valid actions are: Add, Remove, Update.")]
         [ValidateSet('Add', 'Remove', 'Update')]
         [string]
         $Action,
@@ -333,65 +391,49 @@ Function RunAzureConditionalForwarderMaintenance {
         [Parameter(Mandatory = $False, Position = 8, HelpMessage = "Name of DNS Partition.")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DNSPartition = $Null,
+        $DNSPartition = $Null<# ,
         [Parameter(Mandatory = $False, Position = 9, HelpMessage = "Name or IP address of DNS Server where want to run this code. Default is local host.")]
         [ValidateNotNullorEmpty()]
         [string]
-        $DNSServer = '.'
+        $DNSServer = '.' #>
     )
 
-    #Load  Azure public DNS zones from CSV file (table as shown in https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns)
-    [System.Collections.ArrayList]$csvContents = Import-Csv $CsvFilePath -Delimiter ';'
-
-    #Grab only the public DNS Zone forwarders to add as conditional forwarding zone on the on-premises DNS servers (non-AD integrated)
-    [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwarders = $csvContents.('Public DNS zone forwarders') #Note this automagically drops the header as well. No need for | select -skip 1 to remove header
-
-
-    #remove duplicates - some Azure services have the same
-    [System.Collections.ArrayList]$AllAzurePublicDnsZoneForwarders = $AllAzurePublicDnsZoneForwarders | Sort-Object | Get-Unique
-
-    #The MSFT table at can have empty rows, get rid of them.
-    [System.Collections.ArrayList]$NoEmptiesAllAzurePublicDnsZoneForwarders = RemoveEmptyZones -AzurePublicDnsZoneForwarders $AllAzurePublicDnsZoneForwarders
-    #$NoEmptiesAllAzurePublicDnsZoneForwarders
-
-    #If you choose to create Region based entries for the desired regions is is done here, If not, the {region} place holder based rows are removed and not added.
-    [System.Collections.ArrayList]$NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders = CreateRegionZones -AzurePublicDnsZoneForwarders $NoEmptiesAllAzurePublicDnsZoneForwarders -HARegions $HARegions
-    #$NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders
-
-    #If you choose to create partition Id based entries for the desired partitions is done here, If not, the {partitionId} place holder based rows are removed and not added.
-    [System.Collections.ArrayList]$NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders = CreatePartitionZones -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsAllAzurePublicDnsZoneForwarders -PartitionIDs $PartitionIDs
-    #$NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders
-
-    #If you choose to create SQL instance based entries for the desired SQL instances is done here, If not, the {instance.{db} place holder based rows are removed and not added.
-    [System.Collections.ArrayList]$NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders = CreateSqlInstances -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsAllAzurePublicDnsZoneForwarders -InstanceDotDB $InstanceDotDB
-    #$NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders
-  
-
+    $Params = @{
+        'CsvFilePath'           = $CsvFilePath
+        'DnsServer2Forward2'    = $DnsServer2Forward2
+        'HARegions'             = $HARegions
+        'PartitionIDs'          = $PartitionIDs
+        'InstanceDotDB'         = $InstanceDotDB
+    }
+    
+    $AzurePublicDnsZoneForwarders = LoadAndFilterData @Params
+    
     Switch ($Action) {
         'Add' {
         
             If ( [String]::IsNullorEmpty($DnsReplicationScope)) {
-                AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders `
+                AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders `
                     -DnsServer2Forward2 $DnsServer2Forward2 -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
             }
             Else {
                 If ([String]::IsNullorEmpty($DNsPartition)) {
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 `
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer2Forward2 `
                         $DnsServer2Forward2 -DnsReplicationScope $DnsReplicationScope  -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
                 }
                 Else {
-                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 `
+                    AddConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer2Forward2 $DnsServer2Forward2 `
                         -DirectoryPartitionName $DNsPartition -DnsReplicationScope $DnsReplicationScope -DnsServer $DNSServer -ForwarderTimeOut $ForwarderTimeOut
                 }
             }
         }
  
         'Remove' {
-            RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -DnsServer $DNSServer
+            RemoveConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -DnsServer $DNSServer
         }
         'Update' {
-            UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $NoEmptiesWithRegionsWithPartitionsSqlInstancesAllAzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 `
+            UpdateConditionalForwarders -AzurePublicDnsZoneForwarders $AzurePublicDnsZoneForwarders -UpdateDnsServer2Forward2 $DnsServer2Forward2 `
                 -ForwarderTimeOut $ForwarderTimeOut -DnsServer $DNSServer
         }
     }
 }
+
