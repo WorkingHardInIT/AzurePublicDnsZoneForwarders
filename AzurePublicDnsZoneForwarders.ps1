@@ -255,20 +255,22 @@ Function UpdateConditionalForwarders {
         foreach ($Zone in $AzurePublicDnsZoneForwarders) {
             If ($null -ne $UpdateDnsServer2Forward2) {
                 If ((Get-DnsServerZone -ComputerName $DNSServerIPorName | Where-Object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } )) {
-                    [string[]]$CurrentIpAddressesOfForwarder = (Get-DnsServerZone -ComputerName $DNSServerIPorName | Where-Object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } | Select-Object -Property MasterServers -ExpandProperty MasterServers).IPAddressToString
+                    [string[]]$CurrentIpAddressesOfForwarder = (Get-DnsServerZone -ComputerName $DNSServerIPOrName | Where-Object { $_.ZoneType -eq 'Forwarder' -and $_.ZoneName -eq $Zone } | Select-Object -Property MasterServers -ExpandProperty MasterServers).IPAddressToString
+                    $PrintCurrentIpAddressesOfForwarder = $CurrentIpAddressesOfForwarder -join ";"
                     $UpdateDnsServer2Forward2 | ForEach-Object {
                         If ($_ -in $CurrentIpAddressesOfForwarder) {
-                            Write-Output "$Zone Array value is the same in both DNS server IP address arrays: $_"
+                            Write-Output "$Zone Array value is the same in both DNS server IP address arrays: $PrintCurrentIpAddressesOfForwarder."
                         }
                         Else {
-                            Write-Output  "$Zone Array value is different in both DNS server IP address arrays: $_"
+                            Write-Output  "$Zone Array value is different in both DNS server IP address arrays: $PrintCurrentIpAddressesOfForwarder."
                             $Params = @{
                                 'ComputerName'  = $DnsServer
                                 'Name'          = $Zone
                                 'MasterServers' = $DnsServer2Forward2
                             }
                             Set-DnsServerConditionalForwarderZone @Params
-                            Write-Output "    ||==> Updated DNS server for conditional forward lookup zone for $Zone to $UpdateDnsServer2Forward2"
+                            $PrintUpdateDnsServer2Forward2 = $UpdateDnsServer2Forward2 -join ";"
+                            Write-Output "    ||==> Updated DNS server for conditional forward lookup zone for $Zone to $PrintUpdateDnsServer2Forward2"
                             continue
                         }
                     }
